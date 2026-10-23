@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ミッカリ - 地域活動マッチングアプリ</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .tab-active {
+            border-bottom: 3px solid #0284c7;
+            color: #0284c7;
+            font-weight: bold;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-0 md:p-6 relative">
+
+    <!-- PC表示時のスマホ外枠フレーム（PC時は幅max-mdのスマホ型、スマホ時は画面全幅） -->
+    <div class="w-full max-w-md bg-slate-50 min-h-screen md:min-h-[840px] md:max-h-[90vh] md:rounded-[40px] md:shadow-2xl md:border-[8px] md:border-slate-800 flex flex-col relative overflow-hidden">
+
+        <!-- ================= 1. 初回チュートリアル（オンボーディング） ================= -->
+        <div id="tutorial-overlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-6 fade-in">
+                <div id="step-1" class="space-y-4">
+                    <div class="w-20 h-20 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+                        <i class="fa-solid fa-hand-holding-heart"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-200">STEP 1 / 3</span>
+                        <h2 class="text-lg font-bold text-slate-800 mt-2">地域の助け合いをスマートに</h2>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                            買い物補助やイベント準備など、地域のお困りごとと高校生の意欲を安全につなぐプラットフォームです。
+                        </p>
+                    </div>
+                    <button onclick="nextStep(2)" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 rounded-xl text-xs transition shadow-md">
+                        次へ進む <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <div id="step-2" class="space-y-4 hidden">
+                    <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+                        <i class="fa-regular fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">STEP 2 / 3</span>
+                        <h2 class="text-lg font-bold text-slate-800 mt-2">アプリ内カレンダーで自動同期</h2>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                            空き時間を登録しておけばAIが自動マッチング。手挙げて決定したお手伝いは自動でカレンダーに入ります。
+                        </p>
+                    </div>
+                    <button onclick="nextStep(3)" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 rounded-xl text-xs transition shadow-md">
+                        次へ進む <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <div id="step-3" class="space-y-4 hidden">
+                    <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">STEP 3 / 3</span>
+                        <h2 class="text-lg font-bold text-slate-800 mt-2">ポイント獲得＆地域で還元</h2>
+                        <p class="text-xs text-slate-500 mt-2 leading-relaxed">
+                            活動で貯まったポイントはQR決済での買い物や寄付が可能。自らの振り返りも実績ログとして蓄積されます。
+                        </p>
+                    </div>
+                    <button onclick="finishTutorial()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs transition shadow-md">
+                        さっそくはじめる <i class="fa-solid fa-check ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 2. アプリ本体ヘッダー ================= -->
+        <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-30 flex-shrink-0">
+            <div class="px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-sky-600 text-white p-1.5 rounded-xl text-base font-black tracking-wider flex items-center shadow-sm">
+                        <i class="fa-solid fa-hand-holding-heart mr-1.5"></i>ミッカリ
+                    </div>
+                    <span class="bg-sky-100 text-sky-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                        〇〇市
+                    </span>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                    <button onclick="openModal('modal-my-qr')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition border flex items-center">
+                        <i class="fa-solid fa-qrcode text-sky-600 mr-1"></i>マイQR
+                    </button>
+                    <button onclick="openModal('modal-auth')" class="bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition shadow-sm">
+                        ログイン
+                    </button>
+                </div>
+            </div>
+
+            <nav class="bg-white border-t border-slate-100">
+                <div class="flex justify-around text-xs font-medium">
+                    <button onclick="switchMode('student')" id="tab-student" class="py-2.5 px-1 tab-active transition flex items-center">
+                        <i class="fa-solid fa-graduation-cap mr-1"></i>高校生
+                    </button>
+                    <button onclick="switchMode('citizen')" id="tab-citizen" class="py-2.5 px-1 text-slate-500 hover:text-slate-700 transition flex items-center">
+                        <i class="fa-solid fa-heart mr-1"></i>地域市民
+                    </button>
+                    <button onclick="switchMode('admin')" id="tab-admin" class="py-2.5 px-1 text-slate-500 hover:text-slate-700 transition flex items-center">
+                        <i class="fa-solid fa-building-user mr-1"></i>運営
+                    </button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- 注意事項アナウンス（※学生モード時のみ表示） -->
+        <div id="student-badge-alert" class="bg-amber-50 border-b border-amber-200 px-3 py-1.5 text-[11px] text-amber-900 text-center font-medium fade-in flex-shrink-0">
+            <i class="fa-solid fa-shield-halved text-amber-600 mr-1"></i>
+            活動時は<strong>【お手伝いバッジ（胸部着用）】</strong>を装着してください。
+        </div>
+
+        <!-- メインコンテンツ（スクロール可能エリア） -->
+        <main class="px-4 py-4 flex-grow overflow-y-auto w-full space-y-5">
+
+            <!-- 高校生モード -->
+            <section id="mode-student" class="space-y-4 fade-in">
+                <!-- プロフィール＆獲得ポイント -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center text-xl font-bold shadow-inner flex-shrink-0">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <div class="flex items-center space-x-1.5">
+                                <h2 class="text-base font-bold text-slate-800 truncate" id="profile-name">未登録ユーザー</h2>
+                                <span class="bg-emerald-100 text-emerald-800 text-[9px] px-1.5 py-0.5 rounded font-bold flex-shrink-0">
+                                    確認済
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 truncate mt-0.5">
+                                <span id="profile-school">学校未設定</span> <span id="profile-grade"></span> / バッジNo: <span class="font-mono font-bold text-slate-700">MK-2026-8802</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t text-center">
+                        <div class="bg-slate-50 py-1.5 rounded-xl border border-slate-100">
+                            <span class="block text-[9px] text-slate-500">獲得ポイント</span>
+                            <span class="text-lg font-black text-sky-600" id="student-points">600</span> <span class="text-xs font-bold text-slate-600">pt</span>
+                        </div>
+                        <div class="bg-slate-50 py-1.5 rounded-xl border border-slate-100">
+                            <span class="block text-[9px] text-slate-500">お手伝い完了</span>
+                            <span class="text-lg font-black text-emerald-600">3</span> <span class="text-xs font-bold text-slate-600">回</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button onclick="openModal('modal-use-points')" class="bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold py-2 rounded-xl transition shadow-sm">
+                            <i class="fa-solid fa-basket-shopping mr-1"></i>使う・寄付
+                        </button>
+                        <button onclick="openModal('modal-badge-info')" class="bg-slate-800 text-white text-[11px] font-bold py-2 rounded-xl hover:bg-slate-700 transition">
+                            <i class="fa-solid fa-id-card mr-1"></i>バッジ確認
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 📅 アプリ内カレンダー管理セクション -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between border-b pb-2">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-xs flex items-center">
+                                <i class="fa-regular fa-calendar-days text-sky-600 mr-1.5"></i>活動予定・空き時間カレンダー
+                            </h3>
+                        </div>
+                        <button onclick="openModal('modal-add-schedule')" class="bg-sky-600 hover:bg-sky-700 text-white text-[10px] font-bold px-2 py-1 rounded-lg transition shadow-sm">
+                            <i class="fa-solid fa-plus mr-1"></i>追加
+                        </button>
+                    </div>
+
+                    <div id="calendar-event-list" class="space-y-2 text-xs">
+                        <div class="bg-sky-50 p-2.5 rounded-xl border border-sky-200">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <span class="font-bold text-sky-900 text-[11px]"><i class="fa-regular fa-clock mr-1"></i>10月24日(土) 10:00 - 15:00</span>
+                                <span class="bg-sky-200 text-sky-800 text-[9px] px-1.5 py-0.5 rounded font-bold">空き時間</span>
+                            </div>
+                            <p class="text-[10px] text-slate-600">登録済み（お手伝い募集中）</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 募集一覧 -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-xs text-slate-800 flex items-center">
+                            <i class="fa-solid fa-list-check text-sky-600 mr-1.5"></i>AI最適マッチング中のお困りごと
+                        </h3>
+                    </div>
+
+                    <div id="student-job-list" class="space-y-3">
+                        <!-- JSで動的生成 -->
+                    </div>
+                </div>
+
+                <!-- 公式活動実績ログ証明書 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between border-b pb-2">
+                        <h3 class="font-bold text-slate-800 text-xs flex items-center">
+                            <i class="fa-solid fa-award text-amber-500 mr-1.5"></i>〇〇市公式 活動実績ログ
+                        </h3>
+                        <button onclick="openModal('modal-reflection-edit')" class="text-sky-600 hover:underline text-[10px] font-bold">
+                            <i class="fa-solid fa-pen-to-square mr-0.5"></i>編集
+                        </button>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-xl space-y-2 border">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[9px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold">CERT-2026-9041</span>
+                                <h4 class="font-bold text-xs text-slate-800 mt-0.5">買い物補助および重い荷物の運搬支援</h4>
+                            </div>
+                            <span class="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">完了</span>
+                        </div>
+                        <div class="text-[10px] text-slate-600 space-y-0.5">
+                            <p><i class="fa-regular fa-calendar mr-1"></i>2026年10月15日 15:30 - 16:30</p>
+                        </div>
+                        <div class="border-t pt-1.5 mt-1">
+                            <span class="text-[10px] font-bold text-slate-700 block mb-0.5">探究の振り返り（気づき・学び）:</span>
+                            <p id="reflection-text-display" class="text-[10px] text-slate-600 bg-white p-2 rounded border italic">
+                                「高齢の方が普段の買い物で重いお米を運ぶ苦労を実感しました。地域のバリアフリーの重要性を学ぶ機会となりました。」
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 地域市民モード -->
+            <section id="mode-citizen" class="hidden space-y-4 fade-in">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                    <div class="border-b pb-2 mb-3">
+                        <h2 class="font-bold text-sm text-slate-800 flex items-center">
+                            <i class="fa-solid fa-pen-to-square text-sky-600 mr-1.5"></i>お手伝いをお願いする
+                        </h2>
+                    </div>
+
+                    <form id="form-create-job" onsubmit="handleCreateJob(event)" class="space-y-3 text-xs">
+                        <div>
+                            <label class="block font-bold text-slate-700 mb-1">困りごとのタイトル</label>
+                            <input type="text" id="job-title" required placeholder="例: お米やお重い調味料の買い物補助" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">カテゴリ</label>
+                                <select id="job-category" class="w-full p-2 border border-slate-300 rounded-lg bg-white outline-none">
+                                    <option value="買い物支援">🛒 買い物支援</option>
+                                    <option value="地域イベント">🎪 地域イベント</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-700 mb-1">希望日時・場所</label>
+                                <input type="text" id="job-location" required placeholder="明日 15:00" class="w-full p-2 border border-slate-300 rounded-lg outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block font-bold text-slate-700">詳しいお手伝いの内容</label>
+                                <button type="button" onclick="simulateVoiceInput()" class="text-[10px] text-sky-600 font-bold flex items-center">
+                                    <i class="fa-solid fa-microphone mr-1"></i>音声入力(デモ)
+                                </button>
+                            </div>
+                            <textarea id="job-desc" rows="2" required placeholder="具体的にお手伝いしてほしい内容をご記入ください。" class="w-full p-2 border border-slate-300 rounded-lg outline-none"></textarea>
+                        </div>
+
+                        <div class="bg-sky-50 p-2.5 rounded-xl border border-sky-100 flex items-center justify-between text-[11px] text-sky-900">
+                            <span><i class="fa-solid fa-coins text-amber-500 mr-1"></i>高校生へのお礼</span>
+                            <span class="font-bold">100円 (補填で生徒に200pt)</span>
+                        </div>
+
+                        <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm">
+                            投稿して募集する
+                        </button>
+                    </form>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="font-bold text-xs text-slate-800 flex items-center">
+                        <i class="fa-solid fa-clock-rotate-left text-sky-600 mr-1.5"></i>投稿したお手伝い一覧
+                    </h3>
+                    <div id="citizen-job-list" class="space-y-2">
+                        <!-- JSで動的描画 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 市・運営者モード -->
+            <section id="mode-admin" class="hidden space-y-4 fade-in">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[9px] text-slate-500 block">今月マッチング</span>
+                        <span class="text-lg font-black text-slate-800">18</span> <span class="text-[10px] text-slate-600">件</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="text-[9px] text-slate-500 block">地域循環ポイント</span>
+                        <span class="text-lg font-black text-sky-600">3,600</span> <span class="text-[10px] text-slate-600">pt</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <h3 class="font-bold text-slate-800 text-xs flex items-center">
+                            <i class="fa-solid fa-clipboard-check text-sky-600 mr-1.5"></i>事前審査キュー
+                        </h3>
+                        <span class="bg-amber-100 text-amber-800 text-[9px] px-2 py-0.5 rounded-full font-bold">1件 保留</span>
+                    </div>
+
+                    <div id="admin-queue-list" class="space-y-2">
+                        <div class="bg-slate-50 p-3 rounded-xl border space-y-2">
+                            <div>
+                                <span class="bg-sky-100 text-sky-800 text-[9px] px-1.5 py-0.5 rounded font-bold">買い物支援</span>
+                                <h4 class="font-bold text-xs text-slate-800 mt-1">お米（5kg）の運搬支援</h4>
+                                <p class="text-[10px] text-slate-500">依頼者: 新井 和子 / 屋外集合</p>
+                            </div>
+                            <button onclick="alert('案件を承認し公認掲載しました。')" class="w-full bg-emerald-600 text-white text-[10px] font-bold py-1.5 rounded-lg hover:bg-emerald-700 transition">
+                                承認して公開
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- モーダル類（絶対配置でスマホフレーム内に収まる仕様） -->
+
+    <!-- モーダル: 空き時間追加 -->
+    <div id="modal-add-schedule" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl space-y-3 fade-in">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-xs flex items-center">
+                    <i class="fa-regular fa-calendar-plus text-sky-600 mr-1.5"></i>空き時間を追加
+                </h3>
+                <button onclick="closeModal('modal-add-schedule')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleAddScheduleSubmit(event)" class="space-y-2.5 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">日付</label>
+                    <input type="date" id="sched-date" required class="w-full p-2 border rounded-lg outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">開始時間</label>
+                        <input type="time" id="sched-start" required value="13:00" class="w-full p-1.5 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">終了時間</label>
+                        <input type="time" id="sched-end" required value="17:00" class="w-full p-1.5 border rounded-lg outline-none">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 rounded-xl transition text-xs">
+                    空き時間として登録する
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- モーダル: ログイン/新規登録 -->
+    <div id="modal-auth" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl space-y-3 fade-in my-auto">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm">ログイン / アカウント登録</h3>
+                <button onclick="closeModal('modal-auth')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-2.5 text-xs">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">姓</label>
+                        <input type="text" id="reg-last-name" required placeholder="静岡" value="" class="w-full p-1.5 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">名</label>
+                        <input type="text" id="reg-first-name" required placeholder="花子" value="" class="w-full p-1.5 border rounded-lg outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">属性（役割）</label>
+                    <select id="reg-role" onchange="toggleRoleFields()" class="w-full p-1.5 border rounded-lg bg-white outline-none">
+                        <option value="student" selected>高校生（学生）</option>
+                        <option value="citizen">地域住民（シニア等）</option>
+                    </select>
+                </div>
+
+                <div id="role-field-student" class="space-y-2 bg-sky-50 p-2.5 rounded-lg border border-sky-100">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">学校名</label>
+                        <input type="text" id="reg-school" required placeholder="例: 静岡雙葉高校" value="" class="w-full p-1.5 border rounded-lg bg-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">学年</label>
+                        <select id="reg-grade" class="w-full p-1.5 border rounded-lg bg-white outline-none">
+                            <option value="1年">1年</option>
+                            <option value="2年">2年</option>
+                            <option value="3年">3年</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 rounded-lg text-xs transition shadow-sm">
+                    登録してログイン
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- モーダル: ポイント利用・寄付 -->
+    <div id="modal-use-points" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl space-y-3 fade-in">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-xs flex items-center">
+                    <i class="fa-solid fa-coins text-amber-500 mr-1.5"></i>ポイントの利用・寄付
+                </h3>
+                <button onclick="closeModal('modal-use-points')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="bg-sky-50 p-2.5 rounded-xl border border-sky-100 text-center">
+                <span class="text-[10px] text-slate-500 block">利用可能ポイント</span>
+                <span class="text-xl font-black text-sky-600" id="modal-point-val">600</span> <span class="text-xs font-bold text-slate-600">pt</span>
+            </div>
+
+            <div class="space-y-2">
+                <button onclick="openPointPayModal()" class="w-full bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border flex items-center justify-between text-left transition">
+                    <span class="text-xs font-bold text-slate-800">加盟店でQRコード決済</span>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                </button>
+
+                <button onclick="openDonationModal()" class="w-full bg-slate-50 hover:bg-slate-100 p-2.5 rounded-xl border flex items-center justify-between text-left transition">
+                    <span class="text-xs font-bold text-slate-800">地域・災害復興へ寄付</span>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- モーダル: 加盟店用QRコード決済 -->
+    <div id="modal-point-pay" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl text-center space-y-3 fade-in">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-xs">加盟店QRコード決済</h3>
+                <button onclick="closeModal('modal-point-pay')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="bg-slate-50 p-3 rounded-xl border space-y-2">
+                <div class="w-32 h-32 bg-white border-2 border-slate-800 rounded-xl p-2 mx-auto flex items-center justify-center relative shadow-inner">
+                    <i class="fa-solid fa-qrcode text-6xl text-slate-800"></i>
+                </div>
+                <span class="text-[10px] text-slate-500 block">お店のレジで提示してください</span>
+            </div>
+
+            <button onclick="simulateStorePay()" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 rounded-xl transition">
+                お店のQRを読み取る（デモ）
+            </button>
+        </div>
+    </div>
+
+    <!-- モーダル: 寄付（募金）選択画面 -->
+    <div id="modal-donate" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl space-y-3 fade-in">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-xs">ポイント寄付</h3>
+                <button onclick="closeModal('modal-donate')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleDonateSubmit(event)" class="space-y-2.5 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">寄付先</label>
+                    <select id="donate-target" class="w-full p-2 border rounded-lg bg-white outline-none">
+                        <option value="〇〇市 災害復興・防災基金">〇〇市 災害復興・防災基金</option>
+                        <option value="地元高校生 探究活動支援基金">地元高校生 探究活動支援基金</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">金額</label>
+                    <select id="donate-amount" class="w-full p-2 border rounded-lg bg-white outline-none">
+                        <option value="100">100 pt</option>
+                        <option value="200" selected>200 pt</option>
+                        <option value="500">500 pt</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 rounded-xl text-xs transition shadow-sm">
+                    寄付を確定する
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- モーダル: マイQRコード -->
+    <div id="modal-my-qr" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl text-center space-y-3 fade-in">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-xs">現地確認用 マイQR</h3>
+                <button onclick="closeModal('modal-my-qr')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="bg-slate-50 p-3 rounded-xl border flex flex-col items-center space-y-1">
+                <div class="w-32 h-32 bg-white border-2 border-slate-800 rounded-xl p-2 flex items-center justify-center relative shadow-inner">
+                    <i class="fa-solid fa-qrcode text-7xl text-slate-800"></i>
+                </div>
+                <span class="text-[10px] font-mono text-slate-500">ID: USER-2026-8802</span>
+            </div>
+
+            <button onclick="simulateQrScan()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-xl transition">
+                相手のQRをスキャン（デモ）
+            </button>
+        </div>
+    </div>
+
+    <!-- モーダル: 物理バッジ確認 -->
+    <div id="modal-badge-info" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-xl text-center space-y-2.5 fade-in">
+            <div class="w-12 h-12 bg-sky-600 text-white rounded-full flex items-center justify-center text-xl mx-auto shadow-md">
+                <i class="fa-solid fa-id-badge"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-xs text-slate-800">〇〇市公認 お手伝いバッジ</h3>
+                <p class="text-xs font-bold text-sky-600 mt-0.5">
+                    <span id="badge-modal-name">未登録</span>（<span id="badge-modal-school">学校未設定</span> <span id="badge-modal-grade"></span>）
+                </p>
+            </div>
+            <div class="bg-amber-50 p-2 rounded-lg border border-amber-200 text-[10px] text-amber-900 text-left">
+                活動時は、交付された【缶バッジ/ビブス】を胸部に着用してください。
+            </div>
+            <button onclick="closeModal('modal-badge-info')" class="w-full bg-slate-800 text-white text-xs font-bold py-1.5 rounded-lg">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <!-- JSロジック -->
+    <script>
+        let currentPoints = 600;
+
+        let jobs = [
+            {
+                id: 1,
+                title: "【買い物補助】お米や重い荷物の運搬補助",
+                category: "買い物支援",
+                location: "〇〇市内スーパー前",
+                time: "10月24日(土) 11:00〜",
+                desc: "お米（5kg）や重い調味料を自宅前まで一緒に運んでいただきたいです。",
+                status: "open",
+                citizenName: "新井 和子"
+            },
+            {
+                id: 2,
+                title: "【地域イベント】自治会館での設営お手伝い",
+                category: "地域イベント",
+                location: "〇〇市 中央自治会館",
+                time: "10月25日(日) 13:30〜",
+                desc: "地域イベント用の長机やパイプ椅子の設営のお手伝いをお願いします。",
+                status: "open",
+                citizenName: "自治会事務局"
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderStudentJobs();
+            renderCitizenJobs();
+        });
+
+        function nextStep(step) {
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById(`step-${step}`).classList.remove('hidden');
+        }
+
+        function finishTutorial() {
+            document.getElementById('tutorial-overlay').classList.add('hidden');
+            openModal('modal-auth');
+        }
+
+        function switchMode(mode) {
+            document.getElementById('mode-student').classList.add('hidden');
+            document.getElementById('mode-citizen').classList.add('hidden');
+            document.getElementById('mode-admin').classList.add('hidden');
+
+            document.getElementById('tab-student').classList.remove('tab-active');
+            document.getElementById('tab-citizen').classList.remove('tab-active');
+            document.getElementById('tab-admin').classList.remove('tab-active');
+
+            const alertBox = document.getElementById('student-badge-alert');
+            if (mode === 'student') {
+                alertBox.classList.remove('hidden');
+            } else {
+                alertBox.classList.add('hidden');
+            }
+
+            document.getElementById(`mode-${mode}`).classList.remove('hidden');
+            document.getElementById(`tab-${mode}`).classList.add('tab-active');
+        }
+
+        function renderStudentJobs() {
+            const container = document.getElementById('student-job-list');
+            container.innerHTML = '';
+
+            jobs.forEach(job => {
+                if (job.status === 'open') {
+                    const card = `
+                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2 fade-in">
+                            <div class="flex justify-between items-start">
+                                <span class="bg-sky-100 text-sky-800 text-[10px] px-2 py-0.5 rounded font-bold">${job.category}</span>
+                                <span class="text-[10px] text-emerald-600 font-bold"><i class="fa-solid fa-wand-magic-sparkles mr-0.5"></i>AI一致</span>
+                            </div>
+                            <h4 class="font-bold text-xs text-slate-800">${job.title}</h4>
+                            <p class="text-[10px] text-slate-600"><i class="fa-solid fa-location-dot mr-1"></i>${job.location} (${job.time})</p>
+                            <div class="pt-1.5 border-t flex justify-between items-center">
+                                <span class="text-[10px] text-slate-500">依頼者: ${job.citizenName}</span>
+                                <button onclick="applyJob(${job.id})" class="bg-sky-600 hover:bg-sky-700 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition">
+                                    手挙げて応募
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                }
+            });
+        }
+
+        function applyJob(id) {
+            const job = jobs.find(j => j.id === id);
+            if (job) {
+                job.status = 'matched';
+
+                const calList = document.getElementById('calendar-event-list');
+                const eventCard = `
+                    <div class="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 fade-in">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <span class="font-bold text-emerald-900 text-[11px]"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i>${job.time}</span>
+                            <span class="bg-emerald-200 text-emerald-800 text-[9px] px-1.5 py-0.5 rounded font-bold">予定確定</span>
+                        </div>
+                        <p class="text-[11px] font-bold text-slate-800 truncate">${job.title}</p>
+                    </div>
+                `;
+                calList.innerHTML = eventCard + calList.innerHTML;
+
+                alert(`「${job.title}」に応募し、マッチングが確定しました！\nカレンダーに予定を自動追加しました。`);
+                renderStudentJobs();
+                renderCitizenJobs();
+            }
+        }
+
+        function handleAddScheduleSubmit(e) {
+            e.preventDefault();
+            const dateVal = document.getElementById('sched-date').value;
+            const startVal = document.getElementById('sched-start').value;
+            const endVal = document.getElementById('sched-end').value;
+
+            if (!dateVal) return;
+
+            const calList = document.getElementById('calendar-event-list');
+            const eventCard = `
+                <div class="bg-sky-50 p-2.5 rounded-xl border border-sky-200 fade-in">
+                    <div class="flex justify-between items-center mb-0.5">
+                        <span class="font-bold text-sky-900 text-[11px]"><i class="fa-regular fa-clock mr-1"></i>${dateVal} ${startVal} - ${endVal}</span>
+                        <span class="bg-sky-200 text-sky-800 text-[9px] px-1.5 py-0.5 rounded font-bold">空き時間</span>
+                    </div>
+                    <p class="text-[10px] text-slate-600">登録済み（お手伝い募集中）</p>
+                </div>
+            `;
+            calList.innerHTML = eventCard + calList.innerHTML;
+
+            closeModal('modal-add-schedule');
+            alert(`空き時間（${dateVal} ${startVal}〜${endVal}）を追加しました！`);
+        }
+
+        function openPointPayModal() {
+            closeModal('modal-use-points');
+            openModal('modal-point-pay');
+        }
+
+        function openDonationModal() {
+            closeModal('modal-use-points');
+            openModal('modal-donate');
+        }
+
+        function simulateStorePay() {
+            if (currentPoints < 200) {
+                alert("利用可能なポイントが不足しています。");
+                return;
+            }
+            currentPoints -= 200;
+            updatePointDisplays();
+            closeModal('modal-point-pay');
+            alert(`【QR決済完了】\n加盟店で200ptの決済を行いました。残額: ${currentPoints}pt`);
+        }
+
+        function handleDonateSubmit(e) {
+            e.preventDefault();
+            const target = document.getElementById('donate-target').value;
+            const amountVal = parseInt(document.getElementById('donate-amount').value, 10);
+
+            if (currentPoints < amountVal) {
+                alert("ポイント残高が不足しています。");
+                return;
+            }
+
+            currentPoints -= amountVal;
+            updatePointDisplays();
+            closeModal('modal-donate');
+            alert(`【寄付完了】\n「${target}」へ ${amountVal}pt を寄付しました。残額: ${currentPoints}pt`);
+        }
+
+        function updatePointDisplays() {
+            document.getElementById('student-points').innerText = currentPoints;
+            document.getElementById('modal-point-val').innerText = currentPoints;
+        }
+
+        function handleCreateJob(e) {
+            e.preventDefault();
+            const title = document.getElementById('job-title').value;
+            const category = document.getElementById('job-category').value;
+            const location = document.getElementById('job-location').value;
+            const desc = document.getElementById('job-desc').value;
+
+            const newJob = {
+                id: Date.now(),
+                title: title,
+                category: category,
+                location: location,
+                time: "指定日時",
+                desc: desc,
+                status: "open",
+                citizenName: "新井 和子"
+            };
+
+            jobs.unshift(newJob);
+            alert("お手伝いを投稿しました！");
+            document.getElementById('form-create-job').reset();
+            renderStudentJobs();
+            renderCitizenJobs();
+        }
+
+        function renderCitizenJobs() {
+            const container = document.getElementById('citizen-job-list');
+            container.innerHTML = '';
+
+            jobs.forEach(job => {
+                const statusBadge = job.status === 'open' 
+                    ? '<span class="bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.5 rounded font-bold">高校生募集中</span>'
+                    : '<span class="bg-emerald-100 text-emerald-800 text-[9px] px-1.5 py-0.5 rounded font-bold">マッチ成立</span>';
+
+                const card = `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-1 fade-in">
+                        <div class="flex items-center space-x-2">
+                            ${statusBadge}
+                            <h4 class="font-bold text-xs text-slate-800 truncate">${job.title}</h4>
+                        </div>
+                        <p class="text-[10px] text-slate-600"><i class="fa-solid fa-location-dot mr-1"></i>${job.location}</p>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        function simulateVoiceInput() {
+            document.getElementById('job-title').value = "お米と重い野菜の買い物補助";
+            document.getElementById('job-desc').value = "〇〇スーパーでお米（5kg）を購入するため、自宅まで運ぶのお手伝いをお願いします。";
+        }
+
+        function simulateQrScan() {
+            alert("【QRチェックイン成功】\n本人確認および現地集合の安全確認が完了しました！");
+            closeModal('modal-my-qr');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function toggleRoleFields() {
+            const role = document.getElementById('reg-role').value;
+            const studentField = document.getElementById('role-field-student');
+            if (role === 'student') {
+                studentField.classList.remove('hidden');
+            } else {
+                studentField.classList.add('hidden');
+            }
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const lastName = document.getElementById('reg-last-name').value.trim() || "登録";
+            const firstName = document.getElementById('reg-first-name').value.trim() || "ユーザー";
+            const school = document.getElementById('reg-school').value.trim() || "学校未設定";
+            const grade = document.getElementById('reg-grade').value;
+
+            const fullName = `${lastName} ${firstName}`;
+
+            document.getElementById('profile-name').innerText = fullName;
+            document.getElementById('profile-school').innerText = school;
+            document.getElementById('profile-grade').innerText = grade;
+
+            document.getElementById('badge-modal-name').innerText = fullName;
+            document.getElementById('badge-modal-school').innerText = school;
+            document.getElementById('badge-modal-grade').innerText = grade;
+
+            closeModal('modal-auth');
+            alert(`登録完了: ${fullName} 様 (${school} ${grade})`);
+        }
+    </script>
+</body>
+</html>
